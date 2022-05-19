@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>고양이 가라사대</title>
+</head>
+<style>
+  body {
+    text-align: center;
+  }
+
+  .main-card button {
+    position: relative;
+    left: -45px;
+    bottom: 15px;
+  }
+
+  .favorites {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+</style>
+
+<body>
+  <div id="app"></div>
+
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script type="text/babel">
+    const jsonLocalStorage = {
+      setItem: (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value));
+      },
+      getItem: (key) => {
+        return JSON.parse(localStorage.getItem(key));
+      },
+    };
+
+    const CatItem = ({ img }) => {
+      return (
+        <li>
+          <img src={img} style={{ width: "150px" }} />
+        </li>
+      );
+    }
+
+    const MainCard = ({ mainCard, onHeartClick }) => {
+
+
+      return (
+        <div className="main-card">
+          <img src={mainCard} alt="고양이" width="400" />
+          <button onClick={onHeartClick}>🤍</button>
+        </div>
+      );
+    }
+
+    const Favorites = ({ favorites }) => {
+      return (
+        <ul className="favorites">
+          {
+            favorites.map((cat) => (
+              <CatItem img={cat} key={cat} />
+            ))
+          }
+        </ul>
+      );
+    }
+
+    const Title = ({ title }) => {
+      return (
+        <h1>{title}</h1>
+      );
+    }
+
+    const Form = ({ updateMainCat }) => {
+
+      const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
+      const [value, setValue] = React.useState("");
+      const [errorMessage, setErrorMessage] = React.useState("");
+
+      function handleInputChange(e) {
+        const userValue = e.target.value;
+        setErrorMessage("");
+        if (includesHangul(userValue)) {
+          setErrorMessage("한글은 입력할 수 없습니다");
+        }
+        setValue(userValue.toUpperCase());
+      }
+
+      function handleFormSubmit(e) {
+        e.preventDefault();
+        setErrorMessage("");
+
+        if (value === "") {
+          setErrorMessage("빈 값으로 만들 수 없습니다");
+          return;
+        }
+
+        updateMainCat();
+      }
+
+      return (
+        <form onSubmit={handleFormSubmit}>
+          <input type="text" name="name" placeholder="영어 대사를 입력해주세요" onChange={handleInputChange} value={value} />
+          <p style={{ color: "red" }}>{errorMessage}</p>
+          <button type="submit">생성</button>
+        </form>
+      );
+    }
+
+    const All = () => {
+      const cat1 = "https://cataas.com/cat/60b73094e04e18001194a309/says/react";
+      const cat2 = "https://cataas.com//cat/5e9970351b7a400011744233/says/inflearn";
+      const cat3 = "https://cataas.com/cat/595f280b557291a9750ebf65/says/JavaScript";
+      const cats = [cat1, cat2, cat3];
+      const [counter, setCounter] = React.useState(jsonLocalStorage.getItem("counter"));
+      const [mainCard, setMainCard] = React.useState(cats[counter - 1]);
+      const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem("favorites") || []);
+
+      function updateMainCat() {
+        const nextCounter = (counter >= 3 ? 1 : counter + 1);
+        setCounter(nextCounter);
+        jsonLocalStorage.setItem("counter", nextCounter);
+        setMainCard(cats[nextCounter - 1]);
+      }
+
+      function handleHeartClick() {
+        const nextFavorites = [...favorites, mainCard];
+        setFavorites(nextFavorites);
+        jsonLocalStorage.setItem("favorites", nextFavorites);
+      }
+
+      return (
+        <div>
+          <Title title={counter + "번째 고양이"}></Title>
+          <Form updateMainCat={updateMainCat} />
+          <MainCard mainCard={mainCard} onHeartClick={handleHeartClick}></MainCard>
+          <Favorites favorites={favorites} />
+        </div>
+      );
+    }
+
+    const app = document.querySelector('#app');
+
+    ReactDOM.render(<All />, app);
+  </script>
+</body>
+
+</html>
